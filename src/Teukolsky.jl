@@ -6,7 +6,6 @@ FIXME: Add module documentation here.
 module Teukolsky
 
 using ForwardDiff
-using LinearAlgebra
 
 # Include submodules
 include("kerr_geometry.jl")
