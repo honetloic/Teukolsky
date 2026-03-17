@@ -128,6 +128,7 @@ function solve_psi_up(s, m, a, omega, lambda, rsin, rsout; odealgo=_DEFAULTSOLVE
     if rsin > rsout
         throw(DomainError(rsout, "rsout ($rsout) must be larger than rsin ($rsin)"))
     end
+    rp = r_plus(a)
     # Initial conditions at rs = rsout, the outer boundary
     rout, b1n, psi_inf, psi_inf_prime, psi_inf_double_prime = boundary_conditions_infinity(a, s, omega, m, lambda)
     rsspan = (rout, rsin) # Integrate from rsout to rsin *inward*
@@ -135,7 +136,8 @@ function solve_psi_up(s, m, a, omega, lambda, rsin, rsout; odealgo=_DEFAULTSOLVE
     u0 = SA[psi_inf; psi_inf_prime]
     odeprob = ODEProblem(TeukolskyHS_up, u0, rsspan, param)
     odesoln = solve(odeprob, odealgo; reltol=reltol, abstol=abstol)
-    return 
+    near_infinity_solution(r) = (sum(b1n[i+1] / r^i for i in 0:length(b1n)-1), sum(b1n[i+1] * (-i) / r^(i+1) for i in 1:length(a2n)-1), sum(b1n[i+1] * (i) * (i+1) / r^(i+2) for i in 2:length(a2n)-1))
+    return (rin=rsin, numerical_solution=odesoln, rout=rsout, near_infinity_solution=near_infinity_solution)
 end
 
 """
@@ -194,7 +196,7 @@ function solve_psi_in(s, m, a, omega, lambda, rsin, rsout; odealgo=_DEFAULTSOLVE
 
     odeprob = ODEProblem(TeukolskyHS_in, u0, rsspan, param)
     odesoln = solve(odeprob, odealgo; reltol=reltol, abstol=abstol)
-    near_horizon_solution(r) = (sum(a2n[i+1] * (r - rp)^i for i in 0:length(a2n)-1), sum(a2n[i+1] * i * (r - rp)^(i-1) for i in 0:length(a2n)-1))
+    near_horizon_solution(r) = (sum(a2n[i+1] * (r - rp)^i for i in 0:length(a2n)-1), sum(a2n[i+1] * i * (r - rp)^(i-1) for i in 1:length(a2n)-1), sum(a2n[i+1] * i * (i-1) * (r - rp)^(i-2) for i in 2:length(a2n)-1))
 
     return (near_horizon_solution=near_horizon_solution, rin=rin, numerical_solution=odesoln, rout=rsout)
 end
@@ -228,7 +230,18 @@ function psi_in(s, m, a, omega, lambda, rsin, rsout; odealgo=_DEFAULTSOLVER, rel
 
     psi_in(r) = (r <= psi_in_sols.rin ? psi_in_sols.near_horizon_solution(r)[1] : psi_in_sols.numerical_solution(r)[1]) 
     dpsi_in(r) = (r <= psi_in_sols.rin ? psi_in_sols.near_horizon_solution(r)[2] : psi_in_sols.numerical_solution(r)[2])
-    d2psi_in(r) = TeukolskyHS_in((psi_in(r), dpsi_in(r)), param, r)[2]
+    d2psi_in(r) = (r <= psi_in_sols.rin ? psi_in_sols.near_horizon_solution(r)[3] : TeukolskyHS_in((psi_in(r), dpsi_in(r)), param, r)[2])
 
     return r -> (psi_in(r), dpsi_in(r), d2psi_in(r))
+end
+
+function psi_up(s, m, a, omega, lambda, rsin, rsout; odealgo=_DEFAULTSOLVER, reltol=_DEFAULTTOLERANCE, abstol=_DEFAULTTOLERANCE)
+    param = (s=s, m=m, a=a, omega=omega, lambda=lambda)
+    psi_up_sols = solve_psi_up(s, m, a, omega, lambda, rsin, rsout)
+
+    psi_up(r) = (r <= psi_up_sols.rout ? psi_up_sols.numerical_solution(r)[1] : psi_up_sols.near_infinity_solution(r)[1]) 
+    dpsi_up(r) = (r <= psi_up_sols.rout ? psi_up_sols.numerical_solution(r)[2] : psi_up_sols.near_infinity_solution(r)[2])
+    d2psi_up(r) = (r <= psi_up_sols.rout ? TeukolskyHS_up((psi_up(r), dpsi_up(r)), param, r)[2] : psi_up_sols.near_infinity_solution(r)[3])
+
+    return r -> (psi_up(r), dpsi_up(r), d2psi_up(r))
 end

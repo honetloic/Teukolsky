@@ -19,8 +19,8 @@ export chop_noise, Delta, rho, rho_cc, K, Sigma, f, Gtilde, Utilde, df_dr, r_plu
 export p, q, dq_horizon, dq_infinity, dp_horizon, dp_infinity, c_horizon, A2n, boundary_conditions_horizon, boundary_conditions_infinity, B1n
 
 # Export homogeneous solution functions
-export TeukolskyHS_up, TeukolskyHS_in, solve_psi_up, solve_psi_in
-export psi_in
+export TeukolskyHS_up, TeukolskyHS_in, solve_psi_up, solve_psi_in, solve_psi_up
+export psi_in, psi_up
 
 
 end # module
