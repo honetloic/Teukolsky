@@ -11,6 +11,7 @@ using ForwardDiff
 include("kerr_geometry.jl")
 include("boundary_conditions.jl")
 include("homogeneous.jl")
+include("starobinsky.jl")
 
 # Export geometry functions
 export chop_noise, Delta, rho, rho_cc, K, Sigma, f, Gtilde, Utilde, df_dr, r_plus, r_minus
