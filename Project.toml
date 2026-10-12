@@ -1,7 +1,7 @@
 name = "Teukolsky"
 uuid = "673450eb-84ae-4e73-aaa8-2c3472414c13"
 authors = ["Loic Honet loic.honet@ulb.be"]
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 
 [deps]
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
